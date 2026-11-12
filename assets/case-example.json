@@ -1,0 +1,41 @@
+{
+  "id": "ORDER-IDEMPOTENCY-001",
+  "title": "相同幂等键重复下单不产生重复订单",
+  "requirement_ids": [
+    "ORDER-REQ-007"
+  ],
+  "risk": "high",
+  "layer": "api-integration",
+  "required": true,
+  "status": "planned",
+  "reason": null,
+  "preconditions": [
+    "测试用户已认证",
+    "商品库存充足"
+  ],
+  "steps": [
+    "相同用户和幂等键提交两次下单",
+    "核对订单、库存和优惠券"
+  ],
+  "timeout_seconds": 30,
+  "oracle": {
+    "source": "替换为实际订单接口验收标准定位",
+    "assertions": [
+      {
+        "id": "A-ONE-ORDER",
+        "statement": "只有一条有效订单"
+      },
+      {
+        "id": "A-STOCK",
+        "statement": "库存只扣减一次"
+      }
+    ]
+  },
+  "cleanup_steps": [
+    "根据本次创建的业务ID清理测试数据"
+  ],
+  "failure_resolution": null,
+  "limitations": [
+    "本用例不单独证明并发重复请求正确"
+  ]
+}

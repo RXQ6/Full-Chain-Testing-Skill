@@ -1,0 +1,56 @@
+name: Validate skill
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: ${{ matrix.os }} / Python ${{ matrix.python }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            python: '3.10'
+          - os: windows-latest
+            python: '3.12'
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Unit and structural regression tests
+        run: python -m unittest discover -s tests -v
+      - name: Check skill structure and references
+        run: python scripts/self_check.py .
+      - name: Execute defective synthetic API
+        run: python evaluation/run_fixture.py .runs/api-defective --variant defective
+      - name: Execute fixed synthetic API
+        run: python evaluation/run_fixture.py .runs/api-fixed --variant fixed
+      - name: Validate both runs and expected outcomes
+        shell: python
+        run: |
+          import json
+          from pathlib import Path
+          import subprocess
+          import sys
+          for variant, failed in (("defective", 3), ("fixed", 0)):
+              run = Path(".runs") / ("api-" + variant)
+              for tool in ("validate_records.py", "check_traceability.py", "summarize_results.py"):
+                  subprocess.run([sys.executable, str(Path("scripts") / tool), str(run), "--json"], check=True)
+              summary = json.loads((run / "summary.json").read_text(encoding="utf-8"))
+              assert summary["valid"]
+              counts = summary["summary"]["case_counts"]
+              assert counts["failed"] == failed
+              assert counts["passed"] == 3 - failed
+              assert summary["summary"]["cleanup"] == {"cleaned": 1}

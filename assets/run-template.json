@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "id": "new-run",
+  "mode": "plan",
+  "scope": [
+    "填写本次约定测试范围"
+  ],
+  "exclusions": [],
+  "environment_id": "unrecorded",
+  "revision": {
+    "product": "unrecorded",
+    "test": "unrecorded",
+    "configuration": "unrecorded"
+  },
+  "authorized_actions": [],
+  "limits": {},
+  "baseline": {},
+  "requirements": [],
+  "coverage_exceptions": [],
+  "quality_criteria": [],
+  "workflow_state": "active",
+  "quality_decision": "pending",
+  "decision_basis": ""
+}

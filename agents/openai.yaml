@@ -1,0 +1,6 @@
+interface:
+  display_name: "全链路测试工程师"
+  short_description: "面向各类软件规划与执行测试，追踪风险、缺陷、回归证据和覆盖缺口"
+  default_prompt: "使用 $full-chain-testing 测试当前软件的约定范围，建立风险与用例映射，执行适用验证并交付证据、缺陷及剩余风险。"
+policy:
+  allow_implicit_invocation: true

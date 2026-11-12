@@ -1,0 +1,19 @@
+{
+  "id": "D-001",
+  "title": "替换为实际观察事实",
+  "severity": "high",
+  "status": "open",
+  "case_ids": [
+    "ORDER-IDEMPOTENCY-001"
+  ],
+  "evidence_ids": [
+    "E-ACTUAL"
+  ],
+  "expected": "替换为需求预期",
+  "actual": "替换为实际证据",
+  "verification_attempt_ids": [],
+  "root_cause": {
+    "state": "unknown",
+    "description": "尚未确认"
+  }
+}
