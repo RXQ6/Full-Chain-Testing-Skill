@@ -1,0 +1,55 @@
+{
+  "valid": true,
+  "errors": [],
+  "warnings": [],
+  "summary": {
+    "run_id": "repository-self-hosted",
+    "workflow_state": "completed",
+    "quality_decision": "meets_agreed_criteria",
+    "case_counts": {
+      "blocked": 0,
+      "failed": 0,
+      "inconclusive": 0,
+      "not_applicable": 0,
+      "passed": 1,
+      "planned": 0,
+      "running": 0,
+      "skipped": 0
+    },
+    "pass_rate_executed": 1.0,
+    "attempt_counts": {
+      "passed": 1
+    },
+    "case_history": [
+      {
+        "case_id": "C1",
+        "declared_status": "passed",
+        "first_attempt_status": "passed",
+        "latest_current_status": "passed",
+        "attempt_count": 1,
+        "historical_attempt_count": 0,
+        "ever_failed": false,
+        "recovered_after_failure": false,
+        "failure_resolution": null
+      }
+    ],
+    "coverage": [
+      {
+        "requirement_id": "R1",
+        "case_ids": [
+          "C1"
+        ],
+        "required_case_ids": [
+          "C1"
+        ],
+        "mapped": true,
+        "verified_candidate": true,
+        "exceptions": []
+      }
+    ],
+    "traceability_gaps": [],
+    "defects": {},
+    "cleanup": {},
+    "notice": "Record consistency and candidate coverage only; not proof of correctness or release authorization."
+  }
+}

@@ -10,6 +10,7 @@ import unittest
 
 SCRIPTS = Path(__file__).resolve().parents[1] / "scripts"
 sys.path.insert(0, str(SCRIPTS))
+from policy_fixture import add_contract
 from qa_records import load_bundle, validate, summarize, requirement_gaps
 
 def fixture(root):
@@ -38,8 +39,10 @@ def fixture(root):
     ev = {"id": "E1", "run_id": "RUN-1", "case_id": "C1", "attempt_id": "T1",
           "kind": "synthetic", "relative_path": "evidence/one.txt", "sha256": hashlib.sha256(payload).hexdigest(),
           "description": "synthetic only", "captured_at": "2026-01-01T00:00:01Z", "redaction_status": "not_needed"}
-    return {"run": run, "cases": {"cases": [case]}, "attempts": [attempt],
+    bundle = {"run": run, "cases": {"cases": [case]}, "attempts": [attempt],
             "evidence": {"evidence": [ev]}, "defects": {"defects": []}, "resources": {"resources": []}, "_root": root}
+    add_contract(bundle)
+    return bundle
 
 def save(bundle):
     root = bundle["_root"]

@@ -33,6 +33,10 @@ jobs:
         run: python -m unittest discover -s tests -v
       - name: Check skill structure and references
         run: python scripts/self_check.py .
+      - name: Verify checked-in evidence bytes
+        run: python scripts/validate_records.py evaluation/examples/repository --json
+      - name: Verify compact example
+        run: python scripts/validate_records.py evaluation/examples/compact --json
       - name: Execute defective synthetic API
         run: python evaluation/run_fixture.py .runs/api-defective --variant defective
       - name: Execute fixed synthetic API
@@ -47,10 +51,15 @@ jobs:
           for variant, failed in (("defective", 3), ("fixed", 0)):
               run = Path(".runs") / ("api-" + variant)
               for tool in ("validate_records.py", "check_traceability.py", "summarize_results.py"):
-                  subprocess.run([sys.executable, str(Path("scripts") / tool), str(run), "--json"], check=True)
-              summary = json.loads((run / "summary.json").read_text(encoding="utf-8"))
+                  command = [sys.executable, str(Path("scripts") / tool), str(run), "--json"]
+                  if tool == "summarize_results.py":
+                      command += ["--output", str(run / "independent-summary.json")]
+                  subprocess.run(command, check=True)
+              summary = json.loads((run / "independent-summary.json").read_text(encoding="utf-8"))
               assert summary["valid"]
               counts = summary["summary"]["case_counts"]
               assert counts["failed"] == failed
               assert counts["passed"] == 3 - failed
               assert summary["summary"]["cleanup"] == {"cleaned": 1}
+      - name: Self-hosted repository case and negative control
+        run: python evaluation/run_repository_case.py .runs/repository-case

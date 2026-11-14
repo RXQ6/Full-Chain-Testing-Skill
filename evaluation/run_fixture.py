@@ -81,7 +81,7 @@ def main():
            "exclusions": ["No real software/platform acceptance", "No concurrency, mobile, desktop or model evaluation"],
            "environment_id": "isolated-loopback-" + variant, "revision": revision,
            "authorized_actions": ["local synthetic server and new output directory"],
-           "limits": {"request_timeout_seconds": 3, "external_calls": 0}, "baseline": {},
+           "limits": {"request_timeout_seconds": 3, "external_calls": 0, "duration_seconds": 60, "max_calls": 40, "max_concurrency": 1}, "baseline": {},
            "requirements": [
                {"id": "R-AMOUNT", "statement": "120 minus 20 equals 100", "source": "fixture contract", "risk": "high"},
                {"id": "R-AUTH", "statement": "forbidden operation does not write", "source": "fixture contract", "risk": "high"},
@@ -125,7 +125,7 @@ def main():
             defects.append({"id": did, "title": title, "severity": "high", "status": "open", "case_ids": [cid],
                             "evidence_ids": [eid], "expected": "; ".join(s for _, s, _ in assertion_specs),
                             "actual": "See actual-loopback-response evidence", "verification_attempt_ids": [],
-                            "root_cause": {"state": "confirmed", "description": "Explicitly seeded fixture behavior"}})
+                            "opened_at": ended, "root_cause": {"state": "confirmed", "evidence_ids": [eid], "description": "Explicitly seeded fixture behavior"}})
     try:
         started = now()
         response = request(base, "/price")
@@ -175,6 +175,38 @@ def main():
     for name in ("run", "cases", "evidence", "defects", "resources"):
         (out / (name + ".json")).write_text(json.dumps(bundle[name], ensure_ascii=False, indent=2), encoding="utf-8")
     (out / "results.jsonl").write_text("".join(json.dumps(a, ensure_ascii=False) + "\n" for a in attempts), encoding="utf-8")
+    # Execute an isolated known-bad control, independent of the fixed responses.
+    mutant = make_server("defective")
+    mt = threading.Thread(target=mutant.serve_forever, daemon=True)
+    mt.start()
+    mb = "http://127.0.0.1:" + str(mutant.server_port)
+    try:
+        bad_price = request(mb, "/price")
+        before = request(mb, "/state")
+        request(mb, "/admin", "POST")
+        after = request(mb, "/state")
+        first = request(mb, "/orders", "POST", {"Idempotency-Key":"control"})
+        second = request(mb, "/orders", "POST", {"Idempotency-Key":"control"})
+        killed = {"C-AMOUNT": bad_price["body"]["amount"] != 100,
+                  "C-AUTH": before["body"]["admin_writes"] != after["body"]["admin_writes"],
+                  "C-IDEMP": first["body"]["id"] != second["body"]["id"]}
+    finally:
+        mutant.shutdown(); mutant.server_close(); mt.join(timeout=3)
+    contract = {"scope":run["scope"], "requirements":run["requirements"], "negative_control_results":killed}
+    data = json.dumps(contract, indent=2).encode()
+    (out / "evidence/contract-control.json").write_bytes(data)
+    evidence.append({"id":"E-CONTRACT", "run_id":run["id"], "case_id":None, "attempt_id":None,
+        "kind":"contract-and-negative-control", "relative_path":"evidence/contract-control.json",
+        "sha256":hashlib.sha256(data).hexdigest(), "description":"Fixture contract and actual isolated mutant checks",
+        "captured_at":now(), "redaction_status":"not_needed"})
+    ids = [r["id"] for r in run["requirements"]]
+    run["scope_contract"] = {"source":"fixture contract", "evidence_ids":["E-CONTRACT"],
+        "items":[{"scope_index":0,"requirement_ids":ids}]}
+    run["acceptance"] = {"source":"fixture contract", "evidence_ids":["E-CONTRACT"],
+        "rules":[{"operator":"all_required_pass","requirement_ids":ids}]}
+    run["negative_controls"] = [{"case_id":c, "mutation":"isolated seeded contract violation", "outcome":"killed" if ok else "survived", "evidence_ids":["E-CONTRACT"]} for c,ok in killed.items()]
+    for name in ("run", "evidence"):
+        (out / (name + ".json")).write_text(json.dumps(bundle[name], indent=2), encoding="utf-8")
     errors, warnings = validate(bundle)
     result = {"valid": not errors, "errors": errors, "warnings": warnings}
     if not errors:

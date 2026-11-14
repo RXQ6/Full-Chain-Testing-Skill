@@ -31,3 +31,11 @@ python evaluation/run_fixture.py .runs/api-fixed --variant fixed
 当前结构检查无需第三方依赖。开发阶段曾尝试外部 `skill-creator/quick_validate.py`，因该运行环境缺少 PyYAML 未执行成功；本项目不声称获得其认证。
 
 GitHub Actions 的实际状态以对应提交的运行记录为准；本地结果不冒充远端结果。
+
+## 2026-11-14 问题报告修复
+- 路径根与目标统一resolve，区分逃逸、缺失和读取失败；POSIX文件名与Windows ADS分平台处理。
+- 新增范围合同、结构化验收、豁免证据、缺陷发现时序、根因证据、执行预算、负向对照和flaky状态检查。
+- CLI文本/JSON/显式文件输出、跨run对比；初始化失败清除独占新目录并提醒gitignore。
+- 增加轻量契约、真实仓库自托管案例与填好记录；专项补充操作步骤和边界。
+- 本地59项回归（1项平台跳过）及实际负向对照通过。双平台结果以此次提交的GitHub Actions为准，不能用本地代替Windows runner结果。
+- 第三方真实项目与独立模型盲测仍未执行；本次案例明确是自托管真实代码，不宣称第三方评估。

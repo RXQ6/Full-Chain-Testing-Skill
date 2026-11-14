@@ -105,3 +105,13 @@ GitHub Actions 在 Linux / Python 3.10 与 Windows / Python 3.12 上运行单元
 ## 贡献
 
 围绕可复现的漏测、误报、越界或证据问题提交改进，并补充有区分力的测试。保留需求依据和首次失败，不通过削弱断言制造成功；提交前运行上述校验。请勿提交真实凭证、客户数据或本机临时记录。
+
+## 轻量、验收与跨运行对比
+至多3个单点低风险用例可用 [compact模板](assets/compact-template.json)；共享相同校验器。涉及权限、并发、外部写入或性能则使用完整路径。
+~~~sh
+python scripts/summarize_results.py .runs/current --json --output .runs/current/independent-summary.json --baseline .runs/previous
+python evaluation/run_repository_case.py .runs/repository-case
+~~~
+最终通过需要原范围逐项映射、来源证据、结构化验收规则、隔离负向对照，以及所有严重度缺陷的处理。旧记录不得自动补造来源或授权；迁移规则见 [记录契约](references/records-and-status.md)。
+真实项目案例使用本仓库校验器自托管：完整测试套件作为基线，隔离撤回root归一化修复，确认对应回归变红。它不是第三方项目，也不是独立模型评估；见 [项目案例](evaluation/repository-case.md)。
+许可采用 [MIT](LICENSE)。

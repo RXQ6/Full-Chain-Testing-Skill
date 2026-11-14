@@ -47,3 +47,7 @@ python scripts/check_traceability.py NEW_RUN_DIR --json
 新运行的记录结构可有效，但规则未填时追溯检查应失败；这不是产品缺陷。
 
 本版本实际验收及未执行项见 [开发验收报告](../evaluation/validation-report.md)。
+
+## 报告修复后的开发关卡
+在Windows使用未resolve输入或8.3路径验证root归一化；POSIX允许合法冒号文件，Windows仍拒绝ADS。最终验收同时检查范围合同、豁免证据、发现时间、根因证据、结构化规则和负向对照。测试运行器不可替被测fixture生成权威汇总；CI调用独立summarize --output并读取其文件。
+宿主UI字符长度为展示建议，不是记录正确性的硬门槛；prompt引用从frontmatter名称派生。一般链接支持title和锚点，但结构检查不代替完整Markdown规范解析。

@@ -4,11 +4,14 @@ import ast
 import json
 import re
 import sys
+import shlex
+from urllib.parse import unquote
 from pathlib import Path
 
 def check(root):
     root = Path(root).resolve()
     errors = []
+    name = None
     skill = root / "SKILL.md"
     try:
         content = skill.read_text(encoding="utf-8")
@@ -29,7 +32,11 @@ def check(root):
         for link in re.findall(r"\[[^\]]+\]\(([^)]+)\)", body):
             if "://" in link or link.startswith("#"):
                 continue
-            relative = link.split("#", 1)[0]
+            try:
+                relative = unquote(shlex.split(link)[0].split("#", 1)[0])
+            except (ValueError, IndexError):
+                errors.append(str(file.relative_to(root)) + ': malformed Markdown link')
+                continue
             target = (file.parent / relative).resolve()
             if not target.is_relative_to(root) or not target.exists():
                 errors.append(str(file.relative_to(root)) + ": broken or escaping local link")
@@ -45,11 +52,11 @@ def check(root):
             errors.append(str(file.relative_to(root)) + ": invalid JSON template")
     try:
         metadata = (root / "agents/openai.yaml").read_text(encoding="utf-8")
-        if "$full-chain-testing" not in metadata or "allow_implicit_invocation: true" not in metadata:
+        if not name or ("$" + name[1]) not in metadata:
             errors.append("UI metadata invocation policy/default prompt mismatch")
         description = re.search(r'(?m)^\s+short_description:\s*"([^"]+)"\s*$', metadata)
-        if not description or not 25 <= len(description[1]) <= 64:
-            errors.append("UI short description must contain 25..64 characters")
+        if not description or not description[1].strip():
+            errors.append("UI short description must be nonempty; host length guidelines are advisory")
     except OSError:
         errors.append("agents/openai.yaml missing")
     return errors

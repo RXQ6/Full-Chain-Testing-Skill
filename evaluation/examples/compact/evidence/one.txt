@@ -1,0 +1,9 @@
+{
+  "contract": "Repository test suite passes; reverting root canonicalization must break its targeted regression.",
+  "baseline_exit": 0,
+  "baseline_output": "----------------------------------------------------------------------\nRan 59 tests in 6.262s\n\nOK (skipped=1)\n",
+  "mutation": "remove root canonicalization",
+  "control_exit": 1,
+  "control_output": "F\n======================================================================\nFAIL: test_root_is_normalized_in_validator (test_policy.PolicyTests.test_root_is_normalized_in_validator)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"<isolated-mutant>\\tests\\test_policy.py\", line 16, in test_root_is_normalized_in_validator\n    self.assertEqual(validate(self.b)[0], [])\nAssertionError: Lists differ: ['evidence: resolved path escapes run root'] != []\n\nFirst list contains 1 additional elements.\nFirst extra element 0:\n'evidence: resolved path escapes run root'\n\n- ['evidence: resolved path escapes run root']\n+ []\n\n----------------------------------------------------------------------\nRan 1 test in 0.014s\n\nFAILED (failures=1)\n",
+  "killed": true
+}

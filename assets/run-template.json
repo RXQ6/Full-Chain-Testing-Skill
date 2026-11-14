@@ -20,5 +20,16 @@
   "quality_criteria": [],
   "workflow_state": "active",
   "quality_decision": "pending",
-  "decision_basis": ""
+  "decision_basis": "",
+  "scope_contract": {
+    "source": "",
+    "evidence_ids": [],
+    "items": []
+  },
+  "acceptance": {
+    "source": "",
+    "evidence_ids": [],
+    "rules": []
+  },
+  "negative_controls": []
 }

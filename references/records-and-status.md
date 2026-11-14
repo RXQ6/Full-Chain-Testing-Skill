@@ -34,3 +34,18 @@ meets_agreed_criteria需已约定标准、全部适用required用例通过、无
 证据路径不能绝对路径、父目录跳转、Windows驱动器/ADS或解析后逃逸根目录；符号链接也不能逃逸。SHA-256只识别内容，不证明真实性。时间必须含时区，结束不早于开始。不得在记录中放密码、Token或真实客户资料。
 
 可复制的单条结构示例：[用例](../assets/case-example.json)、[缺陷](../assets/defect-example.json)。这些是结构示例，不是执行证据。
+
+## 验收扩展（兼容v1结构，严格最终结论）
+历史记录可以读取，但不能自动补造新证据。最终meets_agreed_criteria新增必要条件：
+- scope_contract.source/evidence_ids/items：逐个scope_index关联requirement_ids，覆盖原约定范围全部项；来源证据应是用户需求或验收材料，不能仅引用模型自己写的范围。机器只能验证关联，不能认证用户身份或需求语义。
+- acceptance.source/evidence_ids/rules：规则operator为all_required_pass，覆盖所有需求；原quality_criteria仅保留展示，不能单独充当验收标准。
+- not_applicable必须有证据；high/critical不得走此豁免。真正不在范围的高风险项需重新约定scope并保留变更依据，不能自行缩范围。
+- 所有严重度的open/fixed缺陷阻断通过。accepted_risk仍需真实责任人及授权证据，不意味着模型可以自己批准。
+- defect.opened_at含时区；verified的验证开始时间必须晚于发现且版本环境匹配。confirmed根因需evidence_ids。
+- 执行必须有已知版本/环境，unrecorded等占位值不能作执行证据；limits含正数duration_seconds/max_calls/max_concurrency，成本等按对象增补。校验器检查声明，外部执行工具负责实际限流和终止。
+- negative_controls每项case_id/mutation/outcome/evidence_ids：适用必测用例需killed的隔离负向对照证据。不能安全注入时维持证据不足，不强制实际设备或生产注入。
+- stability.state为stable/flaky/quarantined；默认最多3次诊断尝试，可显式设max_attempts并给预算依据。隔离需owner/reason/recheck_at，不确定不升级为通过。
+
+## 轻量与趋势
+满足入口的单点低风险阈值时可用compact.json（run/cases/attempts/evidence/defects/resources内联），与多文件共享同一验证器。证据文件仍保留；报告不能省略失败和限制。
+summarize_results.py默认文本，--json输出JSON，--output PATH显式写汇总；--baseline PRIOR_RUN先校验基线再报告新增/删除/状态与定义变化及环境可比性。不要将换定义的通过当纯性能或质量改善。

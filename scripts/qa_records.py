@@ -30,6 +30,18 @@ def read_json(text):
 def load_bundle(root):
     root = Path(root).resolve()
     bundle, errors = {}, []
+    compact = root / "compact.json"
+    if compact.exists():
+        if any((root / name).exists() for name in (*FILES.values(), 'results.jsonl')):
+            return {}, ['compact.json: mixed full and compact records are ambiguous']
+        try:
+            data = read_json(compact.read_text(encoding="utf-8-sig"))
+            bundle = {"run": data["run"], "attempts": data["attempts"], "_root": root}
+            for key in ("cases", "evidence", "defects", "resources"):
+                bundle[key] = {key: data[key]}
+            return bundle, []
+        except (OSError, ValueError, KeyError, TypeError):
+            return {}, ["compact.json: invalid compact record"]
     for key, name in FILES.items():
         try:
             value = read_json((root / name).read_text(encoding="utf-8-sig"))
@@ -247,7 +259,7 @@ def _validate(bundle, initial_errors=()):
                 errors.append("passed attempt: all assertions must pass")
         if a.get("status") == "failed" and not any(x.get("status") == "failed" for x in ax):
             warnings.append("failed attempt has no failed assertion; review execution failure evidence")
-    root = bundle["_root"]
+    root = Path(bundle["_root"]).resolve()
     for e in es:
         if e.get("run_id") != run.get("id"):
             errors.append("evidence: run mismatch")
@@ -266,19 +278,26 @@ def _validate(bundle, initial_errors=()):
             continue
         try:
             p = Path(rel.replace("\\", "/"))
-            if p.is_absolute() or PureWindowsPath(rel).drive or ".." in p.parts or ":" in rel or "\x00" in rel:
-                raise ValueError("unsafe path")
+            if p.is_absolute() or PureWindowsPath(rel).drive or ".." in p.parts or (__import__("os").name == "nt" and ":" in rel) or "\x00" in rel:
+                errors.append("evidence: unsafe lexical path")
+                continue
             target = (root / p).resolve()
-            if not target.is_relative_to(root) or not target.is_file():
-                raise ValueError("outside root or missing file")
+            if not target.is_relative_to(root):
+                errors.append("evidence: resolved path escapes run root")
+                continue
+            if not target.is_file():
+                errors.append("evidence: file missing")
+                continue
             h = hashlib.sha256()
             with target.open("rb") as stream:
                 for chunk in iter(lambda: stream.read(1024 * 1024), b""):
                     h.update(chunk)
             if h.hexdigest() != digest:
                 errors.append("evidence: content hash mismatch")
-        except (OSError, ValueError, RuntimeError):
-            errors.append("evidence: unsafe, missing, or unreadable file")
+        except OSError:
+            errors.append("evidence: file unreadable")
+        except (ValueError, RuntimeError):
+            errors.append("evidence: invalid or unresolvable path")
     for a in ats:
         aids = set(a.get("evidence_ids", [])) if string_list(a.get("evidence_ids")) else set()
         for x in a.get("assertions", []) if isinstance(a.get("assertions"), list) else []:
@@ -363,8 +382,12 @@ def _validate(bundle, initial_errors=()):
 
 def validate(bundle, initial_errors=()):
     try:
-        return _validate(bundle, initial_errors)
-    except (TypeError, KeyError, AttributeError, OverflowError):
+        errors, warnings = _validate(bundle, initial_errors)
+        if not errors:
+            from acceptance_policy import check_policy
+            errors.extend(check_policy(bundle))
+        return errors, warnings
+    except (TypeError, KeyError, AttributeError, OverflowError, OSError, ValueError):
         return list(initial_errors) + ["invalid field type or record structure"], []
 
 def summarize(bundle):
